@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Machine Learning for Combinatorial Optimization</title>
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
+        <script type="text/javascript" src="d3.min.js"></script>
+        <script type="text/javascript" src="jquery-1.6.2.min.js"></script>
+        <style type="text/css">
+body {
+    font-family: Palatino, Helvetica, sans;
+}
+table {
+    position: absolute;
+    width: 80%;
+    left: 10%;
+    border-collapse: collapse;
+}
+td {
+    padding: 3px .5em;
+    width: 12.5%;
+    vertical-align: top;
+}
+tr.data {
+    border-top: 1px solid;
+}
+tr.pad > td {
+    padding: 5px .5em;
+}
+th {
+    border-bottom: 2px solid;
+    padding: 10px .5em;
+}
+h1 {
+    text-align: center;
+    font-size: 180%;
+}
+h2 {
+    text-align: center;
+}
+
+.expl {
+    position: absolute;
+    right: 10%;
+    top: 3%;
+    width: 15%;
+    text-align: right;
+    color: #888;
+}
+
+.contact {
+    position: absolute;
+    left: 3%;
+    top: 3%;
+    width: 15%;
+    text-align: left;
+    color: #888;
+}
+        </style>
+    </head>
+
+    <body>
+        <h1>Approaches to Machine Learning for Combinatorial Optimization</h1>
+        <h2>Last update 30 August 2021</h2>
+        <div class="expl">click headings to sort<br/><br/>click citations to
+        expand<br/>or view link to repository</div>
+        <script type="text/javascript">
+    (function() {
+        var down = "↓", up = "↑", idx = 0,
+            headers = ["Citation", "Learning type", "Type of heuristic", "Examined problems",
+                    "Search method", "Used heuristics", "Auto-regressive", "Year"];
+
+        function id(d) {
+            return d;
+        }
+
+        function getSelectedText() {
+            var text = "";
+            if (typeof window.getSelection != "undefined") {
+                text = window.getSelection().toString();
+            } else if (typeof document.selection != "undefined" && document.selection.type == "Text") {
+                text = document.selection.createRange().text;
+            }
+            return text;
+        }
+
+        function cellcont(d) {
+            if(d.short) {
+                d.showShort = d.showShort || true;
+                
+                if(d.showShort) { d3.select(this).html(d.short); }
+                else { d3.select(this).html(d.long); }
+
+                d3.select(this).on("mouseup", function(d) {
+                    if(getSelectedText().length == 0) {
+                        d.showShort = d.showShort ^ true;
+                        if(d.showShort) { d3.select(this).html(d.short); }
+                        else { d3.select(this).html(d.long); }
+                    }
+                });
+            } else {
+                d3.select(this).html(d);
+            }
+        }
+
+        function compare(h, a, b) {
+            var ah = null, bh = null;
+            if(h == "Citation") {
+                ah = a[h].short, bh = b[h].short;
+            } else {
+                ah = a[h], bh = b[h];
+            }
+            return ah < bh ? -1 : (ah > bh ? 1 : 0);
+        }
+
+        function citesort(f, h) {
+            return function(a, b) {
+                var tmp = f * ((h == "Year") ? a[h] - b[h] : compare(h, a, b));
+                if(tmp == 0 && h != "Citation") {
+                    return f * compare("Citation", a, b);
+                } else {
+                    return tmp;
+                }
+            };
+        }
+
+        function addSeparators(i) {
+            var prev = null;
+            $("tr.data td:nth-child(" + (i+1) + ")").each(function(j, d) {
+                if(prev != null && prev != $(d).html()) {
+                    $(d).parent().css("border-color", "black");
+                }
+                prev = $(d).html();
+            });
+        }
+
+        var table = d3.select("body").append("table");
+        table.append("tr").selectAll("th").data(headers).enter()
+            .append("th")
+            .attr("width", function(d) {
+                if(d == "Citation") {
+                    return "30%";
+                }
+            })
+            .html(id)
+            .on("click", function(h, i) {
+                $("tr.data:first").css("border-top-width", 1);
+                var html = $(this).html(),
+                    last = html[html.length-1],
+                    suf = "", f = 1;
+                if(last == down) {
+                    suf = up;
+                    f = -1;
+                } else {
+                    suf = down;
+                }
+                table.selectAll("th").data(headers).html(id);
+                $(this).html(h + suf);
+                table.selectAll("tr.data").sort(citesort(f, h));
+                $("tr.data").css("border-color", "#ddd");
+                if(h != "Citation") {
+                    addSeparators(i);
+                }
+                $("tr.data:first").css("border-top-width", 0);
+            });
+        table.append("tr").classed("pad", true).append("td");
+        d3.json("lit.json", function(lit) {
+            table.selectAll("tr.data").data(lit).enter()
+                .append("tr").classed("data", true)
+                .style("border-color", "#ddd")
+                .selectAll("td").data(function(d) {
+                    return $.map(headers, function(e) {
+                        return d[e];
+                    });
+                }).enter()
+                .append("td")
+                .each(cellcont);
+            $("tr.data:first").css("border-top-width", 0);
+        });
+    })();
+        </script>
+    </body>
+</html>
